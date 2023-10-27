@@ -42,35 +42,17 @@ if __name__ == "__main__":
 
     target = Path(args.target)
     if target.is_dir():
-        target = list(target.glob("**/*.json"))
-    elif target.suffix == '.txt':
-        target = [target.parent.parent / line.strip() for line in target.open('r', encoding='utf8')]
+        target = list(target.glob("**/*.png"))
     else:
-        raise FileNotFoundError("target not found.")
-
-    craft_time, swin_time = [], []
-    scores = []
-    logger = open("test_log.log", "a", encoding="utf8")
-    logger.write("-"*20+"\n")
-    logger.write('[image_fn], f1, precision, recall, pred_box_num, gt_box_num\n')
-    gt_boxes = []
+        raise FileNotFoundError("target not found")
     try:
-        for i, json_fn in tqdm.tqdm(enumerate(target), total=len(target)):
+        for i, targ in tqdm.tqdm(enumerate(target), total=len(target)):
             start = time()
-            # page = np.array(Image.open(image_fn).convert('BGR'))
-            page = cv2.imread(str(json_fn.with_suffix('.png')))
-            gt = load_json_data(json_fn)
+
+            page = cv2.imread(str(targ))
 
             pred_boxes = craft.predict(page)
-            craft_time.append(time()-start)
 
-            # img = page.copy()
-            # for box in pred_boxes:
-            #     lx, ly, rx, ry = box
-            #     img = cv2.rectangle(img, [lx, ly], [rx, ry], color=(255, 0, 0), thickness=1)
-            # cv2.imwrite(f'test_result/{json_fn.stem}.png', img)
-
-            start = time()
             cropped_images = []
             for box in pred_boxes:
                 lx, ly, rx, ry = box
@@ -78,24 +60,8 @@ if __name__ == "__main__":
                 cropped_images.append(cropped)
             result = swin_transformer.predict(cropped_images,
                                             batch_size=cfg.swin_transformer.bs)
-            swin_time.append(time()-start)
-            (f1, precision, recall), refined_pred = calc_score(list(zip(pred_boxes, result)), gt)
-
-            # img = page.copy()
-            # for box, text in refined_pred:
-            #     lx, ly, rx, ry = box
-            #     img = cv2.rectangle(img, [lx, ly], [rx, ry], color=(255, 0, 0), thickness=1)
-            # for box, text in gt:
-            #     lx, ly, rx, ry = box
-            #     img = cv2.rectangle(img, [lx, ly], [rx, ry], color=(0, 255, 255), thickness=1)
-            # cv2.imwrite(f'test_result/{json_fn.stem}_refined.png', img)
-
-            logger.write(f"[{json_fn.stem}],{f1},{precision},{recall},{len(cropped_images),len(gt)}\n")
-            scores.append(f1)
+            print(result)
+            
     except Exception as e:
         print(traceback.format_exc())
         logger.write(traceback.format_exc()+'\n')
-    logger.close()
-    print("total score:", sum(scores) / len(scores))
-    print("craft avg time:", sum(craft_time) / len(craft_time))
-    print("swin avg time:", sum(swin_time) / len(swin_time))
