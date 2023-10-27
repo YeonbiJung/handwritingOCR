@@ -1,0 +1,48 @@
+craft:
+  weight: "assets/craft-state-dict.pt"
+
+  # Parameters
+  threshold_word: 0.7
+  threshold_character: 0.6
+  threshold_affinity: 0.3
+  img_size: 1536
+
+swin_transformer:
+  weight: "assets/swin-transformer-state-dict.pt"
+  tokenizer: "assets/swin-transformer-tokenizer.pkl"
+  bs: 512
+
+  # Parameters for model architectures
+  width: 448
+  height: 112
+  channels: 3
+
+  # Encoder
+  encoder_dim: 96
+  patch_size: 4
+  window_size: 7
+  encoder_depth: [2, 6, 2]
+  encoder_heads: [6, 12, 24]
+
+  # Decoder
+  max_seq_len: 32
+  decoder_dim: 384
+  decoder_heads: 8
+  decoder_depth: 4
+  decoder_cfg:
+    cross_attend: true
+    ff_glu: false
+    attn_on_attn: false
+    use_scalenorm: false
+    rel_pos_bias: false
+
+  # Other
+  seed: 42
+  temperature: 0.2
+  pad: False
+
+  # Token ids
+  pad_token: 0
+  bos_token: 1
+  eos_token: 2
+  oov_token: 3
